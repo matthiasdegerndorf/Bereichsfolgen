@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bereichsfolge Brannenburg Feuerwehr Degerndorf RO-L</title>
+<title>Bereichsfolge Brannenburg RO-L</title>
 <style>
   :root {
     --bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3348;
@@ -283,7 +283,7 @@
   <div class="header-top">
     <div class="logo">🚒</div>
     <div class="title-block">
-      <h1>Bereichsfolge Brannenburg RO-L <span class="app-version-badge"><span class="app-ver-dot"></span>v1.5.0</span></h1>
+      <h1>Bereichsfolge Brannenburg RO-L <span class="app-version-badge"><span class="app-ver-dot"></span>v1.5.1</span></h1>
       <p>Alarmierungsfolgen für den Dispositionsbereich · Stand: Jan 2026</p>
     </div>
   </div>
@@ -333,7 +333,7 @@
 
     <span id="app-ver-info" style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toggleChangelog()" title="Changelog anzeigen">
       <span style="font-size:0.68rem;color:var(--muted)">App</span>
-      <span style="font-size:0.68rem;font-weight:700;color:#a5b4fc">v1.5.0</span>
+      <span style="font-size:0.68rem;font-weight:700;color:#a5b4fc">v1.5.1</span>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     </span>
   </div>
@@ -365,7 +365,7 @@
     <div style="margin-top:16px;display:flex;flex-direction:column;gap:16px">
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:var(--accent);color:#fff;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:4px">v1.5.0</span>
+          <span style="background:var(--accent);color:#fff;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:4px">v1.5.1</span>
           <span style="font-size:0.72rem;color:var(--muted)">Aktuell · Mai 2026</span>
           <span style="font-size:0.65rem;background:rgba(34,197,94,0.2);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:1px 6px;border-radius:4px">Neu</span>
         </div>
@@ -691,15 +691,29 @@ function buildEditBody(body, zoneName, ortsteil, oertlich) {
   oSec.innerHTML = '<div class="section-title">Örtlich zuständig</div>';
   const oList = document.createElement('div'); oList.className = 'ff-list'; oList.id = `olist-${zoneName}`;
 
+  function markModified() {
+    document.querySelector(`[data-zone="${zoneName}"]`)?.classList.toggle('modified', isModified(zoneName));
+  }
   function refreshOertlich() {
     oList.innerHTML = '';
     WORK[zoneName].oertlich.forEach((ff, i) => {
       const row = document.createElement('div');
       row.className = 'ff-row edit-row';
       row.draggable = true;
-      row.dataset.idx = i;
-      row.innerHTML = `<span class="drag-handle">⠿</span><span class="ff-row-nr">${i+1}</span><input class="edit-name-input" value="${ff.name}" style="border-color:rgba(99,102,241,0.4)"><button class="btn-del-row" title="Entfernen">✕</button>`;
-      row.addEventListener('dragstart', e => { dragSrc = i; row.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+      // Name input
+      const numSpan = document.createElement('span');
+      numSpan.className = 'drag-handle'; numSpan.textContent = '⠿';
+      const nrSpan = document.createElement('span');
+      nrSpan.className = 'ff-row-nr'; nrSpan.textContent = i + 1;
+      const inp = document.createElement('input');
+      inp.className = 'edit-name-input';
+      inp.value = ff.name;
+      inp.style.borderColor = 'rgba(99,102,241,0.4)';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-del-row'; delBtn.title = 'Entfernen'; delBtn.textContent = '✕';
+      row.appendChild(numSpan); row.appendChild(nrSpan); row.appendChild(inp); row.appendChild(delBtn);
+      // Drag
+      row.addEventListener('dragstart', e => { dragSrc = i; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
       row.addEventListener('dragend', () => row.classList.remove('dragging'));
       row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('drag-over'); });
       row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
@@ -709,34 +723,42 @@ function buildEditBody(body, zoneName, ortsteil, oertlich) {
         const arr = WORK[zoneName].oertlich;
         const [moved] = arr.splice(dragSrc, 1);
         arr.splice(i, 0, moved);
-        arr.forEach((f,j) => f.nr = j+1);
-        dragSrc = null; saveToStorage(); refreshOertlich();
-        document.querySelector(`[data-zone="${zoneName}"]`)?.classList.toggle('modified', isModified(zoneName));
+        arr.forEach((f, j) => f.nr = j + 1);
+        dragSrc = null; saveToStorage(); refreshOertlich(); markModified();
       });
-      row.querySelector('.edit-name-input').addEventListener('change', e => {
-        WORK[zoneName].oertlich[i].name = e.target.value.trim();
-        saveToStorage();
-        document.querySelector(`[data-zone="${zoneName}"]`)?.classList.toggle('modified', isModified(zoneName));
+      // Rename on blur/enter
+      inp.addEventListener('change', () => {
+        WORK[zoneName].oertlich[i].name = inp.value.trim();
+        saveToStorage(); markModified();
       });
-      row.querySelector('.btn-del-row').addEventListener('click', () => {
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+      // Delete
+      delBtn.addEventListener('click', () => {
         WORK[zoneName].oertlich.splice(i, 1);
-        WORK[zoneName].oertlich.forEach((f,j) => f.nr = j+1);
-        saveToStorage(); refreshOertlich();
-        document.querySelector(`[data-zone="${zoneName}"]`)?.classList.toggle('modified', isModified(zoneName));
+        WORK[zoneName].oertlich.forEach((f, j) => f.nr = j + 1);
+        saveToStorage(); refreshOertlich(); markModified();
       });
       oList.appendChild(row);
     });
-    // Add örtlich row
-    const addO = document.createElement('div'); addO.className='add-ff-row';
-    addO.innerHTML=`<input class="add-ff-input" placeholder="Örtliche FF hinzufügen…" id="oaddinput-${zoneName}"><button class="btn-add-ff" id="oaddbtn-${zoneName}" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);color:#a5b4fc">+ Hinzufügen</button>`;
-    oList.appendChild(addO);
-    document.getElementById(`oaddbtn-${zoneName}`)?.addEventListener('click', () => {
-      const inp = document.getElementById(`oaddinput-${zoneName}`);
-      const val = inp.value.trim(); if (!val) return;
+    // Add-row (built with DOM, no innerHTML ID trick)
+    const addRow = document.createElement('div');
+    addRow.className = 'add-ff-row';
+    const addInp = document.createElement('input');
+    addInp.className = 'add-ff-input';
+    addInp.placeholder = 'Örtliche FF hinzufügen…';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-ff';
+    addBtn.style.cssText = 'background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);color:#a5b4fc';
+    addBtn.textContent = '+ Hinzufügen';
+    function doAdd() {
+      const val = addInp.value.trim(); if (!val) return;
       WORK[zoneName].oertlich.push({ nr: WORK[zoneName].oertlich.length + 1, name: val });
-      inp.value = ''; saveToStorage(); refreshOertlich();
-      document.querySelector(`[data-zone="${zoneName}"]`)?.classList.toggle('modified', isModified(zoneName));
-    });
+      addInp.value = ''; saveToStorage(); refreshOertlich(); markModified();
+    }
+    addBtn.addEventListener('click', doAdd);
+    addInp.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+    addRow.appendChild(addInp); addRow.appendChild(addBtn);
+    oList.appendChild(addRow);
   }
   refreshOertlich();
   oSec.appendChild(oList);
