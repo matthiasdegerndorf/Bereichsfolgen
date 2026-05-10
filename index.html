@@ -225,6 +225,51 @@
     margin-left: 8px; vertical-align: middle; white-space: nowrap;
   }
   .app-version-badge .app-ver-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  /* CONFIG PANEL */
+  #config-modal .modal { max-width:420px; }
+  .config-section { margin-bottom:18px; }
+  .config-label { font-size:0.72rem; font-weight:700; color:var(--muted); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+  .config-input {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:7px; color:var(--text); font-size:0.85rem;
+    padding:8px 12px; outline:none; transition:border-color .2s;
+  }
+  .config-input:focus { border-color:var(--accent); }
+  .config-hint { font-size:0.68rem; color:var(--muted); margin-top:4px; }
+  .btn-config {
+    display:flex; align-items:center; gap:5px;
+    padding:7px 13px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--muted); font-size:0.76rem;
+    font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap;
+  }
+  .btn-config:hover { border-color:var(--accent); color:var(--text); }
+
+  /* IMPORT */
+  .btn-import { background:rgba(34,211,238,0.12); color:var(--match); border:1px solid var(--match-border); }
+  .btn-import:hover { background:rgba(34,211,238,0.25); }
+  #import-drop-zone {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75);
+    z-index:200; align-items:center; justify-content:center;
+  }
+  #import-drop-zone.visible { display:flex; }
+  .import-box {
+    background:var(--surface); border:2px dashed var(--match-border);
+    border-radius:14px; padding:40px 50px; text-align:center;
+    max-width:460px; width:90%;
+  }
+  .import-box h3 { font-size:1rem; color:#fff; margin-bottom:10px; }
+  .import-box p  { font-size:0.78rem; color:var(--muted); margin-bottom:20px; line-height:1.5; }
+  .import-box.drag-active { border-color:var(--match); background:var(--match-bg); }
+  .import-file-btn {
+    display:inline-block; padding:9px 22px; border-radius:8px;
+    background:var(--match-bg); border:1px solid var(--match-border);
+    color:var(--match); font-size:0.8rem; font-weight:600; cursor:pointer;
+    transition:all .15s;
+  }
+  .import-file-btn:hover { background:rgba(34,211,238,0.25); }
+  #import-file-input { display:none; }
+  .import-warning { font-size:0.7rem; color:var(--mb-muted); margin-top:12px; }
+
   /* VERSION PANEL */
   #version-bar {
     background: var(--surface); border-bottom: 1px solid var(--border);
@@ -283,8 +328,8 @@
   <div class="header-top">
     <div class="logo">🚒</div>
     <div class="title-block">
-      <h1>Bereichsfolge Brannenburg RO-L <span class="app-version-badge"><span class="app-ver-dot"></span>v1.5.2</span></h1>
-      <p>Alarmierungsfolgen für den Dispositionsbereich · Stand: Jan 2026</p>
+      <h1>Bereichsfolge <span id="header-bereich">Brannenburg RO-L</span> <span class="app-version-badge"><span class="app-ver-dot"></span>v1.6.1</span></h1>
+      <p id="header-subtitle">Alarmierungsfolgen für den Dispositionsbereich · Stand: Jan 2026</p>
     </div>
   </div>
   <div class="controls">
@@ -305,6 +350,10 @@
       <button class="filter-btn" data-filter="ros">RO-S</button>
       <button class="filter-btn" data-filter="mb">MB</button>
     </div>
+    <button class="btn-config" onclick="openConfig()" title="Konfiguration">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      Konfig
+    </button>
     <div class="view-toggle">
       <button class="view-btn active" id="btn-zonen" onclick="setView('zonen')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -333,7 +382,7 @@
 
     <span id="app-ver-info" style="margin-left:auto;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toggleChangelog()" title="Changelog anzeigen">
       <span style="font-size:0.68rem;color:var(--muted)">App</span>
-      <span style="font-size:0.68rem;font-weight:700;color:#a5b4fc">v1.5.2</span>
+      <span style="font-size:0.68rem;font-weight:700;color:#a5b4fc">v1.6.1</span>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     </span>
   </div>
@@ -342,6 +391,10 @@
 <!-- EDIT BANNER -->
 <div id="edit-banner">
   <span class="edit-banner-text">✏️ Bearbeitungsmodus aktiv <span>· Änderungen werden lokal gespeichert</span></span>
+  <button class="btn-icon btn-import" onclick="openImport()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Importieren
+  </button>
   <button class="btn-icon btn-export" onclick="exportExcel()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Excel exportieren
@@ -365,7 +418,7 @@
     <div style="margin-top:16px;display:flex;flex-direction:column;gap:16px">
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:var(--accent);color:#fff;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:4px">v1.5.2</span>
+          <span style="background:var(--accent);color:#fff;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:4px">v1.6.1</span>
           <span style="font-size:0.72rem;color:var(--muted)">Aktuell · Mai 2026</span>
           <span style="font-size:0.65rem;background:rgba(34,197,94,0.2);color:var(--green);border:1px solid rgba(34,197,94,0.3);padding:1px 6px;border-radius:4px">Neu</span>
         </div>
@@ -423,6 +476,48 @@
     </div>
   </div>
 </div>
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="config-modal" onclick="if(event.target===this)closeConfig()">
+  <div class="modal" style="max-width:420px">
+    <h3>⚙️ Konfiguration</h3>
+    <div style="margin-top:18px;display:flex;flex-direction:column;gap:18px">
+
+      <div class="config-section">
+        <div class="config-label">Datenbestand Datum (Stand)</div>
+        <input type="text" class="config-input" id="cfg-stand" placeholder="z.B. Jan 2026 oder 01.04.2026" maxlength="30">
+        <div class="config-hint">Wird im Header angezeigt: „Stand: ..."</div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">Bezeichnung des Dispositionsbereichs</div>
+        <input type="text" class="config-input" id="cfg-bereich" placeholder="z.B. Brannenburg RO-L" maxlength="60">
+        <div class="config-hint">Wird im Titel angezeigt.</div>
+      </div>
+
+    </div>
+    <div class="modal-btns" style="margin-top:22px">
+      <button class="btn-modal-cancel" onclick="closeConfig()">Abbrechen</button>
+      <button class="btn-modal-ok" style="background:var(--accent)" onclick="saveConfig()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT OVERLAY -->
+<div id="import-drop-zone">
+  <div class="import-box" id="import-box">
+    <h3>📥 Datei importieren</h3>
+    <p>Ziehe eine exportierte CSV-Datei hierher<br>oder wähle sie aus.<br><br>
+    <b>Vollständige Bereichsfolge</b> oder <b>Änderungsdatei</b> werden erkannt.<br>
+    Die importierten Daten ersetzen den aktuellen Arbeitsstand.</p>
+    <label class="import-file-btn" for="import-file-input">📂 Datei auswählen</label>
+    <input type="file" id="import-file-input" accept=".csv">
+    <div class="import-warning">⚠️ Tipp: Vorher einen Export machen, um nichts zu verlieren.</div>
+    <div style="margin-top:16px">
+      <button class="btn-modal-cancel" onclick="closeImport()">Abbrechen</button>
+    </div>
+  </div>
+</div>
+
 <!-- VERSION BAR -->
 <div id="version-bar">
   <span class="ver-label">Versionen</span>
@@ -639,7 +734,7 @@ function renderGrid() {
   editBtn.style.cssText = 'grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;';
   if (!editMode) {
     editBtn.innerHTML = `<button class="btn-sm btn-edit-toggle" style="padding:9px 18px;font-size:0.8rem" onclick="toggleEditMode()">✏️ Bereichsfolgen bearbeiten</button>
-    <button class="btn-sm btn-export" style="padding:9px 18px;font-size:0.8rem;background:rgba(59,130,246,0.12);color:var(--rol-muted);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer" onclick="exportExcel()">⬇ Excel exportieren</button>`;
+    <button class="btn-sm btn-export" style="padding:9px 18px;font-size:0.8rem;background:rgba(59,130,246,0.12);color:var(--rol-muted);border:1px solid rgba(59,130,246,0.4);border-radius:6px;cursor:pointer" onclick="exportExcel()">⬇ Excel exportieren</button><button class="btn-sm" style="padding:9px 18px;font-size:0.8rem;background:rgba(34,211,238,0.12);color:var(--match);border:1px solid var(--match-border);border-radius:6px;cursor:pointer" onclick="openImport()">⬆ Importieren</button>`;
   }
   grid.appendChild(editBtn);
 }
@@ -935,9 +1030,27 @@ function exportExcel() {
       a2.href = URL.createObjectURL(blob2);
       a2.download = `Bereichsfolge_Brannenburg_Aenderungen_${date}.csv`;
       a2.click();
-    } else {
-      alert('Keine Änderungen gegenüber dem Original vorhanden – kein Änderungsblatt exportiert.');
     }
+
+    // ── Datei 3: Vollständiger aktueller Stand (Import-fähig) ──
+    setTimeout(() => {
+      const fullRows = [['__IMPORT_FORMAT__','v2','Bereichsfolge Brannenburg RO-L',date]];
+      fullRows.push(['Zone','Bereich','Typ','LFD_NR','Feuerwehr']);
+      Object.entries(WORK).forEach(([zoneName, d]) => {
+        (d.oertlich||[]).forEach(ff => {
+          fullRows.push([zoneName, zoneName + ' - BRANNENBURG', 'BFOLGE FF ÖRTLICH', ff.nr, ff.name]);
+        });
+        (d.ortsteil||[]).forEach(ff => {
+          fullRows.push([zoneName, zoneName + ' - BRANNENBURG', 'BFOLGE FF ORTSTEIL', ff.nr, ff.name]);
+        });
+      });
+      const csv3 = '\uFEFF' + fullRows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+      const blob3 = new Blob([csv3], {type:'text/csv;charset=utf-8;'});
+      const a3 = document.createElement('a');
+      a3.href = URL.createObjectURL(blob3);
+      a3.download = `Bereichsfolge_Brannenburg_Komplett_${date}.csv`;
+      a3.click();
+    }, 900);
   }, 500);
 }
 window.exportExcel = exportExcel;
@@ -1143,6 +1256,211 @@ function saveVersion() {
   saveVersions(versions);
   closeVerModal();
   
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport() {
+  document.getElementById('import-drop-zone').classList.add('visible');
+}
+function closeImport() {
+  document.getElementById('import-drop-zone').classList.remove('visible');
+}
+window.openImport = openImport;
+window.closeImport = closeImport;
+
+function parseImportCSV(text) {
+  // Normalize: remove BOM, split lines
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  function parseRow(line) {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ';' && !inQ) { cols.push(cur); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const firstRow = parseRow(lines[0]);
+
+  // Detect format: __IMPORT_FORMAT__ header = our own full export (file 3)
+  const isFullExport = firstRow[0] === '__IMPORT_FORMAT__';
+
+  // Find the data header row (Zone;Bereich;Typ;LFD_NR;Feuerwehr)
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const r = parseRow(lines[i]);
+    if (r[0] === 'Zone' || r[0] === 'Autobahn/Bereich') { dataStart = i + 1; break; }
+  }
+
+  const newWork = JSON.parse(JSON.stringify(WORK)); // start from current
+  let importedZones = 0;
+
+  // For full export: clear all oertlich+ortsteil first for zones we'll import
+  const seenZones = new Set();
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    if (!zone || !typ || typ === 'AUTOBAHN') continue;
+    seenZones.add(zone);
+  }
+
+  if (isFullExport) {
+    // Full export: replace oertlich+ortsteil for all seen zones
+    seenZones.forEach(z => {
+      if (newWork[z]) { newWork[z].oertlich = []; newWork[z].ortsteil = []; }
+    });
+  }
+
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    const nr   = parseInt(r[3]) || 0;
+    const ff   = r[4]?.trim();
+    if (!zone || !typ || !ff || typ === 'AUTOBAHN') continue;
+    if (!newWork[zone]) continue; // unknown zone – skip
+
+    if (typ.includes('ÖRTLICH')) {
+      if (isFullExport) {
+        newWork[zone].oertlich.push({ nr, name: ff });
+      } else {
+        // Diff import: replace position or add
+        const existing = newWork[zone].oertlich.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].oertlich.push({ nr, name: ff });
+      }
+    } else if (typ.includes('ORTSTEIL')) {
+      if (isFullExport) {
+        newWork[zone].ortsteil.push({ nr, name: ff });
+      } else {
+        const existing = newWork[zone].ortsteil.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].ortsteil.push({ nr, name: ff });
+      }
+    }
+    importedZones++;
+  }
+
+  if (importedZones === 0) return null;
+
+  // Re-sort by nr
+  Object.values(newWork).forEach(d => {
+    d.oertlich.sort((a,b) => a.nr - b.nr);
+    d.ortsteil.sort((a,b) => a.nr - b.nr);
+  });
+
+  return { newWork, importedZones, isFullExport };
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = parseImportCSV(e.target.result);
+    if (!result) {
+      alert('❌ Datei konnte nicht gelesen werden. Bitte eine exportierte CSV-Datei verwenden.');
+      return;
+    }
+    const { newWork, importedZones, isFullExport } = result;
+    const msg = isFullExport
+      ? `Vollständigen Stand importieren?\n\n${importedZones} Einträge aus vollständigem Export.\n\nDer aktuelle Stand wird als Version gesichert.`
+      : `Änderungen importieren?\n\n${importedZones} geänderte Einträge aus Änderungsdatei.\n\nDer aktuelle Stand wird als Version gesichert.`;
+    if (!confirm(msg)) return;
+
+    // Auto-save current as version before import
+    const versions = loadVersions();
+    versions.unshift({
+      id: Date.now(),
+      name: `Auto-Backup vor Import (${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})})`,
+      ts: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(WORK))
+    });
+    saveVersions(versions.slice(0, MAX_VERSIONS));
+
+    WORK = newWork;
+    saveToStorage();
+    closeImport();
+    renderVersionBar();
+    renderGrid();
+    alert(`✅ Import erfolgreich!\n${importedZones} Einträge importiert.\n\nDer vorherige Stand wurde als Version gesichert.`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// File input
+document.getElementById('import-file-input').addEventListener('change', e => {
+  handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Drag & drop onto overlay
+const dropZone = document.getElementById('import-drop-zone');
+const importBox = document.getElementById('import-box');
+dropZone.addEventListener('click', e => { if (e.target === dropZone) closeImport(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importBox.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => importBox.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); importBox.classList.remove('drag-active');
+  handleImportFile(e.dataTransfer.files[0]);
+});
+
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG_KEY = 'bereichsfolge_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveConfigData(cfg) {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+function applyConfig() {
+  const cfg = loadConfig();
+  const stand = cfg.stand || 'Jan 2026';
+  const bereich = cfg.bereich || 'Brannenburg RO-L';
+  const subtitle = document.getElementById('header-subtitle');
+  const bereichEl = document.getElementById('header-bereich');
+  if (subtitle) subtitle.textContent = `Alarmierungsfolgen für den Dispositionsbereich · Stand: ${stand}`;
+  if (bereichEl) bereichEl.textContent = bereich;
+  // Update page title too
+  document.title = `Bereichsfolge ${bereich} RO-L`;
+}
+function openConfig() {
+  const cfg = loadConfig();
+  document.getElementById('cfg-stand').value = cfg.stand || 'Jan 2026';
+  document.getElementById('cfg-bereich').value = cfg.bereich || 'Brannenburg RO-L';
+  document.getElementById('config-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('cfg-stand').focus(), 50);
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('visible');
+}
+function saveConfig() {
+  const stand = document.getElementById('cfg-stand').value.trim() || 'Jan 2026';
+  const bereich = document.getElementById('cfg-bereich').value.trim() || 'Brannenburg RO-L';
+  saveConfigData({ stand, bereich });
+  applyConfig();
+  closeConfig();
+}
+window.openConfig = openConfig;
+window.closeConfig = closeConfig;
+window.saveConfig = saveConfig;
+document.getElementById('cfg-stand').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cfg-bereich').focus(); });
+document.getElementById('cfg-bereich').addEventListener('keydown', e => { if(e.key==='Enter') saveConfig(); });
+
+// Apply config on load
+applyConfig();
+
 function toggleChangelog() { document.getElementById('changelog-modal').classList.toggle('visible'); }
 function closeChangelog() { document.getElementById('changelog-modal').classList.remove('visible'); }
 window.toggleChangelog = toggleChangelog;
@@ -1161,6 +1479,211 @@ function restoreVersion(id) {
   WORK = JSON.parse(JSON.stringify(ver.data));
   saveToStorage();
   
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport() {
+  document.getElementById('import-drop-zone').classList.add('visible');
+}
+function closeImport() {
+  document.getElementById('import-drop-zone').classList.remove('visible');
+}
+window.openImport = openImport;
+window.closeImport = closeImport;
+
+function parseImportCSV(text) {
+  // Normalize: remove BOM, split lines
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  function parseRow(line) {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ';' && !inQ) { cols.push(cur); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const firstRow = parseRow(lines[0]);
+
+  // Detect format: __IMPORT_FORMAT__ header = our own full export (file 3)
+  const isFullExport = firstRow[0] === '__IMPORT_FORMAT__';
+
+  // Find the data header row (Zone;Bereich;Typ;LFD_NR;Feuerwehr)
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const r = parseRow(lines[i]);
+    if (r[0] === 'Zone' || r[0] === 'Autobahn/Bereich') { dataStart = i + 1; break; }
+  }
+
+  const newWork = JSON.parse(JSON.stringify(WORK)); // start from current
+  let importedZones = 0;
+
+  // For full export: clear all oertlich+ortsteil first for zones we'll import
+  const seenZones = new Set();
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    if (!zone || !typ || typ === 'AUTOBAHN') continue;
+    seenZones.add(zone);
+  }
+
+  if (isFullExport) {
+    // Full export: replace oertlich+ortsteil for all seen zones
+    seenZones.forEach(z => {
+      if (newWork[z]) { newWork[z].oertlich = []; newWork[z].ortsteil = []; }
+    });
+  }
+
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    const nr   = parseInt(r[3]) || 0;
+    const ff   = r[4]?.trim();
+    if (!zone || !typ || !ff || typ === 'AUTOBAHN') continue;
+    if (!newWork[zone]) continue; // unknown zone – skip
+
+    if (typ.includes('ÖRTLICH')) {
+      if (isFullExport) {
+        newWork[zone].oertlich.push({ nr, name: ff });
+      } else {
+        // Diff import: replace position or add
+        const existing = newWork[zone].oertlich.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].oertlich.push({ nr, name: ff });
+      }
+    } else if (typ.includes('ORTSTEIL')) {
+      if (isFullExport) {
+        newWork[zone].ortsteil.push({ nr, name: ff });
+      } else {
+        const existing = newWork[zone].ortsteil.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].ortsteil.push({ nr, name: ff });
+      }
+    }
+    importedZones++;
+  }
+
+  if (importedZones === 0) return null;
+
+  // Re-sort by nr
+  Object.values(newWork).forEach(d => {
+    d.oertlich.sort((a,b) => a.nr - b.nr);
+    d.ortsteil.sort((a,b) => a.nr - b.nr);
+  });
+
+  return { newWork, importedZones, isFullExport };
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = parseImportCSV(e.target.result);
+    if (!result) {
+      alert('❌ Datei konnte nicht gelesen werden. Bitte eine exportierte CSV-Datei verwenden.');
+      return;
+    }
+    const { newWork, importedZones, isFullExport } = result;
+    const msg = isFullExport
+      ? `Vollständigen Stand importieren?\n\n${importedZones} Einträge aus vollständigem Export.\n\nDer aktuelle Stand wird als Version gesichert.`
+      : `Änderungen importieren?\n\n${importedZones} geänderte Einträge aus Änderungsdatei.\n\nDer aktuelle Stand wird als Version gesichert.`;
+    if (!confirm(msg)) return;
+
+    // Auto-save current as version before import
+    const versions = loadVersions();
+    versions.unshift({
+      id: Date.now(),
+      name: `Auto-Backup vor Import (${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})})`,
+      ts: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(WORK))
+    });
+    saveVersions(versions.slice(0, MAX_VERSIONS));
+
+    WORK = newWork;
+    saveToStorage();
+    closeImport();
+    renderVersionBar();
+    renderGrid();
+    alert(`✅ Import erfolgreich!\n${importedZones} Einträge importiert.\n\nDer vorherige Stand wurde als Version gesichert.`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// File input
+document.getElementById('import-file-input').addEventListener('change', e => {
+  handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Drag & drop onto overlay
+const dropZone = document.getElementById('import-drop-zone');
+const importBox = document.getElementById('import-box');
+dropZone.addEventListener('click', e => { if (e.target === dropZone) closeImport(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importBox.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => importBox.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); importBox.classList.remove('drag-active');
+  handleImportFile(e.dataTransfer.files[0]);
+});
+
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG_KEY = 'bereichsfolge_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveConfigData(cfg) {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+function applyConfig() {
+  const cfg = loadConfig();
+  const stand = cfg.stand || 'Jan 2026';
+  const bereich = cfg.bereich || 'Brannenburg RO-L';
+  const subtitle = document.getElementById('header-subtitle');
+  const bereichEl = document.getElementById('header-bereich');
+  if (subtitle) subtitle.textContent = `Alarmierungsfolgen für den Dispositionsbereich · Stand: ${stand}`;
+  if (bereichEl) bereichEl.textContent = bereich;
+  // Update page title too
+  document.title = `Bereichsfolge ${bereich} RO-L`;
+}
+function openConfig() {
+  const cfg = loadConfig();
+  document.getElementById('cfg-stand').value = cfg.stand || 'Jan 2026';
+  document.getElementById('cfg-bereich').value = cfg.bereich || 'Brannenburg RO-L';
+  document.getElementById('config-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('cfg-stand').focus(), 50);
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('visible');
+}
+function saveConfig() {
+  const stand = document.getElementById('cfg-stand').value.trim() || 'Jan 2026';
+  const bereich = document.getElementById('cfg-bereich').value.trim() || 'Brannenburg RO-L';
+  saveConfigData({ stand, bereich });
+  applyConfig();
+  closeConfig();
+}
+window.openConfig = openConfig;
+window.closeConfig = closeConfig;
+window.saveConfig = saveConfig;
+document.getElementById('cfg-stand').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cfg-bereich').focus(); });
+document.getElementById('cfg-bereich').addEventListener('keydown', e => { if(e.key==='Enter') saveConfig(); });
+
+// Apply config on load
+applyConfig();
+
 function toggleChangelog() { document.getElementById('changelog-modal').classList.toggle('visible'); }
 function closeChangelog() { document.getElementById('changelog-modal').classList.remove('visible'); }
 window.toggleChangelog = toggleChangelog;
@@ -1175,6 +1698,211 @@ function deleteVersion(id, e) {
   if (!ver || !confirm(`Version "${ver.name}" löschen?`)) return;
   saveVersions(versions.filter(v => v.id !== id));
   
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport() {
+  document.getElementById('import-drop-zone').classList.add('visible');
+}
+function closeImport() {
+  document.getElementById('import-drop-zone').classList.remove('visible');
+}
+window.openImport = openImport;
+window.closeImport = closeImport;
+
+function parseImportCSV(text) {
+  // Normalize: remove BOM, split lines
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  function parseRow(line) {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ';' && !inQ) { cols.push(cur); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const firstRow = parseRow(lines[0]);
+
+  // Detect format: __IMPORT_FORMAT__ header = our own full export (file 3)
+  const isFullExport = firstRow[0] === '__IMPORT_FORMAT__';
+
+  // Find the data header row (Zone;Bereich;Typ;LFD_NR;Feuerwehr)
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const r = parseRow(lines[i]);
+    if (r[0] === 'Zone' || r[0] === 'Autobahn/Bereich') { dataStart = i + 1; break; }
+  }
+
+  const newWork = JSON.parse(JSON.stringify(WORK)); // start from current
+  let importedZones = 0;
+
+  // For full export: clear all oertlich+ortsteil first for zones we'll import
+  const seenZones = new Set();
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    if (!zone || !typ || typ === 'AUTOBAHN') continue;
+    seenZones.add(zone);
+  }
+
+  if (isFullExport) {
+    // Full export: replace oertlich+ortsteil for all seen zones
+    seenZones.forEach(z => {
+      if (newWork[z]) { newWork[z].oertlich = []; newWork[z].ortsteil = []; }
+    });
+  }
+
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    const nr   = parseInt(r[3]) || 0;
+    const ff   = r[4]?.trim();
+    if (!zone || !typ || !ff || typ === 'AUTOBAHN') continue;
+    if (!newWork[zone]) continue; // unknown zone – skip
+
+    if (typ.includes('ÖRTLICH')) {
+      if (isFullExport) {
+        newWork[zone].oertlich.push({ nr, name: ff });
+      } else {
+        // Diff import: replace position or add
+        const existing = newWork[zone].oertlich.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].oertlich.push({ nr, name: ff });
+      }
+    } else if (typ.includes('ORTSTEIL')) {
+      if (isFullExport) {
+        newWork[zone].ortsteil.push({ nr, name: ff });
+      } else {
+        const existing = newWork[zone].ortsteil.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].ortsteil.push({ nr, name: ff });
+      }
+    }
+    importedZones++;
+  }
+
+  if (importedZones === 0) return null;
+
+  // Re-sort by nr
+  Object.values(newWork).forEach(d => {
+    d.oertlich.sort((a,b) => a.nr - b.nr);
+    d.ortsteil.sort((a,b) => a.nr - b.nr);
+  });
+
+  return { newWork, importedZones, isFullExport };
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = parseImportCSV(e.target.result);
+    if (!result) {
+      alert('❌ Datei konnte nicht gelesen werden. Bitte eine exportierte CSV-Datei verwenden.');
+      return;
+    }
+    const { newWork, importedZones, isFullExport } = result;
+    const msg = isFullExport
+      ? `Vollständigen Stand importieren?\n\n${importedZones} Einträge aus vollständigem Export.\n\nDer aktuelle Stand wird als Version gesichert.`
+      : `Änderungen importieren?\n\n${importedZones} geänderte Einträge aus Änderungsdatei.\n\nDer aktuelle Stand wird als Version gesichert.`;
+    if (!confirm(msg)) return;
+
+    // Auto-save current as version before import
+    const versions = loadVersions();
+    versions.unshift({
+      id: Date.now(),
+      name: `Auto-Backup vor Import (${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})})`,
+      ts: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(WORK))
+    });
+    saveVersions(versions.slice(0, MAX_VERSIONS));
+
+    WORK = newWork;
+    saveToStorage();
+    closeImport();
+    renderVersionBar();
+    renderGrid();
+    alert(`✅ Import erfolgreich!\n${importedZones} Einträge importiert.\n\nDer vorherige Stand wurde als Version gesichert.`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// File input
+document.getElementById('import-file-input').addEventListener('change', e => {
+  handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Drag & drop onto overlay
+const dropZone = document.getElementById('import-drop-zone');
+const importBox = document.getElementById('import-box');
+dropZone.addEventListener('click', e => { if (e.target === dropZone) closeImport(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importBox.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => importBox.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); importBox.classList.remove('drag-active');
+  handleImportFile(e.dataTransfer.files[0]);
+});
+
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG_KEY = 'bereichsfolge_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveConfigData(cfg) {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+function applyConfig() {
+  const cfg = loadConfig();
+  const stand = cfg.stand || 'Jan 2026';
+  const bereich = cfg.bereich || 'Brannenburg RO-L';
+  const subtitle = document.getElementById('header-subtitle');
+  const bereichEl = document.getElementById('header-bereich');
+  if (subtitle) subtitle.textContent = `Alarmierungsfolgen für den Dispositionsbereich · Stand: ${stand}`;
+  if (bereichEl) bereichEl.textContent = bereich;
+  // Update page title too
+  document.title = `Bereichsfolge ${bereich} RO-L`;
+}
+function openConfig() {
+  const cfg = loadConfig();
+  document.getElementById('cfg-stand').value = cfg.stand || 'Jan 2026';
+  document.getElementById('cfg-bereich').value = cfg.bereich || 'Brannenburg RO-L';
+  document.getElementById('config-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('cfg-stand').focus(), 50);
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('visible');
+}
+function saveConfig() {
+  const stand = document.getElementById('cfg-stand').value.trim() || 'Jan 2026';
+  const bereich = document.getElementById('cfg-bereich').value.trim() || 'Brannenburg RO-L';
+  saveConfigData({ stand, bereich });
+  applyConfig();
+  closeConfig();
+}
+window.openConfig = openConfig;
+window.closeConfig = closeConfig;
+window.saveConfig = saveConfig;
+document.getElementById('cfg-stand').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cfg-bereich').focus(); });
+document.getElementById('cfg-bereich').addEventListener('keydown', e => { if(e.key==='Enter') saveConfig(); });
+
+// Apply config on load
+applyConfig();
+
 function toggleChangelog() { document.getElementById('changelog-modal').classList.toggle('visible'); }
 function closeChangelog() { document.getElementById('changelog-modal').classList.remove('visible'); }
 window.toggleChangelog = toggleChangelog;
@@ -1196,6 +1924,211 @@ function renderVersionBar() {
     saveVersions(versions.slice(0, MAX_VERSIONS));
     WORK = JSON.parse(JSON.stringify(BASELINE));
     saveToStorage(); 
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport() {
+  document.getElementById('import-drop-zone').classList.add('visible');
+}
+function closeImport() {
+  document.getElementById('import-drop-zone').classList.remove('visible');
+}
+window.openImport = openImport;
+window.closeImport = closeImport;
+
+function parseImportCSV(text) {
+  // Normalize: remove BOM, split lines
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  function parseRow(line) {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ';' && !inQ) { cols.push(cur); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const firstRow = parseRow(lines[0]);
+
+  // Detect format: __IMPORT_FORMAT__ header = our own full export (file 3)
+  const isFullExport = firstRow[0] === '__IMPORT_FORMAT__';
+
+  // Find the data header row (Zone;Bereich;Typ;LFD_NR;Feuerwehr)
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const r = parseRow(lines[i]);
+    if (r[0] === 'Zone' || r[0] === 'Autobahn/Bereich') { dataStart = i + 1; break; }
+  }
+
+  const newWork = JSON.parse(JSON.stringify(WORK)); // start from current
+  let importedZones = 0;
+
+  // For full export: clear all oertlich+ortsteil first for zones we'll import
+  const seenZones = new Set();
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    if (!zone || !typ || typ === 'AUTOBAHN') continue;
+    seenZones.add(zone);
+  }
+
+  if (isFullExport) {
+    // Full export: replace oertlich+ortsteil for all seen zones
+    seenZones.forEach(z => {
+      if (newWork[z]) { newWork[z].oertlich = []; newWork[z].ortsteil = []; }
+    });
+  }
+
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    const nr   = parseInt(r[3]) || 0;
+    const ff   = r[4]?.trim();
+    if (!zone || !typ || !ff || typ === 'AUTOBAHN') continue;
+    if (!newWork[zone]) continue; // unknown zone – skip
+
+    if (typ.includes('ÖRTLICH')) {
+      if (isFullExport) {
+        newWork[zone].oertlich.push({ nr, name: ff });
+      } else {
+        // Diff import: replace position or add
+        const existing = newWork[zone].oertlich.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].oertlich.push({ nr, name: ff });
+      }
+    } else if (typ.includes('ORTSTEIL')) {
+      if (isFullExport) {
+        newWork[zone].ortsteil.push({ nr, name: ff });
+      } else {
+        const existing = newWork[zone].ortsteil.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].ortsteil.push({ nr, name: ff });
+      }
+    }
+    importedZones++;
+  }
+
+  if (importedZones === 0) return null;
+
+  // Re-sort by nr
+  Object.values(newWork).forEach(d => {
+    d.oertlich.sort((a,b) => a.nr - b.nr);
+    d.ortsteil.sort((a,b) => a.nr - b.nr);
+  });
+
+  return { newWork, importedZones, isFullExport };
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = parseImportCSV(e.target.result);
+    if (!result) {
+      alert('❌ Datei konnte nicht gelesen werden. Bitte eine exportierte CSV-Datei verwenden.');
+      return;
+    }
+    const { newWork, importedZones, isFullExport } = result;
+    const msg = isFullExport
+      ? `Vollständigen Stand importieren?\n\n${importedZones} Einträge aus vollständigem Export.\n\nDer aktuelle Stand wird als Version gesichert.`
+      : `Änderungen importieren?\n\n${importedZones} geänderte Einträge aus Änderungsdatei.\n\nDer aktuelle Stand wird als Version gesichert.`;
+    if (!confirm(msg)) return;
+
+    // Auto-save current as version before import
+    const versions = loadVersions();
+    versions.unshift({
+      id: Date.now(),
+      name: `Auto-Backup vor Import (${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})})`,
+      ts: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(WORK))
+    });
+    saveVersions(versions.slice(0, MAX_VERSIONS));
+
+    WORK = newWork;
+    saveToStorage();
+    closeImport();
+    renderVersionBar();
+    renderGrid();
+    alert(`✅ Import erfolgreich!\n${importedZones} Einträge importiert.\n\nDer vorherige Stand wurde als Version gesichert.`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// File input
+document.getElementById('import-file-input').addEventListener('change', e => {
+  handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Drag & drop onto overlay
+const dropZone = document.getElementById('import-drop-zone');
+const importBox = document.getElementById('import-box');
+dropZone.addEventListener('click', e => { if (e.target === dropZone) closeImport(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importBox.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => importBox.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); importBox.classList.remove('drag-active');
+  handleImportFile(e.dataTransfer.files[0]);
+});
+
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG_KEY = 'bereichsfolge_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveConfigData(cfg) {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+function applyConfig() {
+  const cfg = loadConfig();
+  const stand = cfg.stand || 'Jan 2026';
+  const bereich = cfg.bereich || 'Brannenburg RO-L';
+  const subtitle = document.getElementById('header-subtitle');
+  const bereichEl = document.getElementById('header-bereich');
+  if (subtitle) subtitle.textContent = `Alarmierungsfolgen für den Dispositionsbereich · Stand: ${stand}`;
+  if (bereichEl) bereichEl.textContent = bereich;
+  // Update page title too
+  document.title = `Bereichsfolge ${bereich} RO-L`;
+}
+function openConfig() {
+  const cfg = loadConfig();
+  document.getElementById('cfg-stand').value = cfg.stand || 'Jan 2026';
+  document.getElementById('cfg-bereich').value = cfg.bereich || 'Brannenburg RO-L';
+  document.getElementById('config-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('cfg-stand').focus(), 50);
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('visible');
+}
+function saveConfig() {
+  const stand = document.getElementById('cfg-stand').value.trim() || 'Jan 2026';
+  const bereich = document.getElementById('cfg-bereich').value.trim() || 'Brannenburg RO-L';
+  saveConfigData({ stand, bereich });
+  applyConfig();
+  closeConfig();
+}
+window.openConfig = openConfig;
+window.closeConfig = closeConfig;
+window.saveConfig = saveConfig;
+document.getElementById('cfg-stand').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cfg-bereich').focus(); });
+document.getElementById('cfg-bereich').addEventListener('keydown', e => { if(e.key==='Enter') saveConfig(); });
+
+// Apply config on load
+applyConfig();
+
 function toggleChangelog() { document.getElementById('changelog-modal').classList.toggle('visible'); }
 function closeChangelog() { document.getElementById('changelog-modal').classList.remove('visible'); }
 window.toggleChangelog = toggleChangelog;
@@ -1244,6 +2177,211 @@ window.saveVersion = saveVersion;
 document.getElementById('ver-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeVerModal(); });
 document.getElementById('ver-name-input')?.addEventListener('keydown', e => { if(e.key==='Enter') saveVersion(); });
 
+
+// ============================================================
+// IMPORT
+// ============================================================
+function openImport() {
+  document.getElementById('import-drop-zone').classList.add('visible');
+}
+function closeImport() {
+  document.getElementById('import-drop-zone').classList.remove('visible');
+}
+window.openImport = openImport;
+window.closeImport = closeImport;
+
+function parseImportCSV(text) {
+  // Normalize: remove BOM, split lines
+  text = text.replace(/^\uFEFF/, '').trim();
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) return null;
+
+  function parseRow(line) {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ';' && !inQ) { cols.push(cur); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  const firstRow = parseRow(lines[0]);
+
+  // Detect format: __IMPORT_FORMAT__ header = our own full export (file 3)
+  const isFullExport = firstRow[0] === '__IMPORT_FORMAT__';
+
+  // Find the data header row (Zone;Bereich;Typ;LFD_NR;Feuerwehr)
+  let dataStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const r = parseRow(lines[i]);
+    if (r[0] === 'Zone' || r[0] === 'Autobahn/Bereich') { dataStart = i + 1; break; }
+  }
+
+  const newWork = JSON.parse(JSON.stringify(WORK)); // start from current
+  let importedZones = 0;
+
+  // For full export: clear all oertlich+ortsteil first for zones we'll import
+  const seenZones = new Set();
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    if (!zone || !typ || typ === 'AUTOBAHN') continue;
+    seenZones.add(zone);
+  }
+
+  if (isFullExport) {
+    // Full export: replace oertlich+ortsteil for all seen zones
+    seenZones.forEach(z => {
+      if (newWork[z]) { newWork[z].oertlich = []; newWork[z].ortsteil = []; }
+    });
+  }
+
+  for (let i = dataStart; i < lines.length; i++) {
+    const r = parseRow(lines[i]);
+    if (r.length < 5) continue;
+    const zone = r[0]?.trim();
+    const typ  = r[2]?.trim();
+    const nr   = parseInt(r[3]) || 0;
+    const ff   = r[4]?.trim();
+    if (!zone || !typ || !ff || typ === 'AUTOBAHN') continue;
+    if (!newWork[zone]) continue; // unknown zone – skip
+
+    if (typ.includes('ÖRTLICH')) {
+      if (isFullExport) {
+        newWork[zone].oertlich.push({ nr, name: ff });
+      } else {
+        // Diff import: replace position or add
+        const existing = newWork[zone].oertlich.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].oertlich.push({ nr, name: ff });
+      }
+    } else if (typ.includes('ORTSTEIL')) {
+      if (isFullExport) {
+        newWork[zone].ortsteil.push({ nr, name: ff });
+      } else {
+        const existing = newWork[zone].ortsteil.find(x => x.nr === nr);
+        if (existing) existing.name = ff;
+        else newWork[zone].ortsteil.push({ nr, name: ff });
+      }
+    }
+    importedZones++;
+  }
+
+  if (importedZones === 0) return null;
+
+  // Re-sort by nr
+  Object.values(newWork).forEach(d => {
+    d.oertlich.sort((a,b) => a.nr - b.nr);
+    d.ortsteil.sort((a,b) => a.nr - b.nr);
+  });
+
+  return { newWork, importedZones, isFullExport };
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const result = parseImportCSV(e.target.result);
+    if (!result) {
+      alert('❌ Datei konnte nicht gelesen werden. Bitte eine exportierte CSV-Datei verwenden.');
+      return;
+    }
+    const { newWork, importedZones, isFullExport } = result;
+    const msg = isFullExport
+      ? `Vollständigen Stand importieren?\n\n${importedZones} Einträge aus vollständigem Export.\n\nDer aktuelle Stand wird als Version gesichert.`
+      : `Änderungen importieren?\n\n${importedZones} geänderte Einträge aus Änderungsdatei.\n\nDer aktuelle Stand wird als Version gesichert.`;
+    if (!confirm(msg)) return;
+
+    // Auto-save current as version before import
+    const versions = loadVersions();
+    versions.unshift({
+      id: Date.now(),
+      name: `Auto-Backup vor Import (${new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})})`,
+      ts: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(WORK))
+    });
+    saveVersions(versions.slice(0, MAX_VERSIONS));
+
+    WORK = newWork;
+    saveToStorage();
+    closeImport();
+    renderVersionBar();
+    renderGrid();
+    alert(`✅ Import erfolgreich!\n${importedZones} Einträge importiert.\n\nDer vorherige Stand wurde als Version gesichert.`);
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+// File input
+document.getElementById('import-file-input').addEventListener('change', e => {
+  handleImportFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+// Drag & drop onto overlay
+const dropZone = document.getElementById('import-drop-zone');
+const importBox = document.getElementById('import-box');
+dropZone.addEventListener('click', e => { if (e.target === dropZone) closeImport(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importBox.classList.add('drag-active'); });
+dropZone.addEventListener('dragleave', () => importBox.classList.remove('drag-active'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); importBox.classList.remove('drag-active');
+  handleImportFile(e.dataTransfer.files[0]);
+});
+
+// ============================================================
+// CONFIG
+// ============================================================
+const CFG_KEY = 'bereichsfolge_config';
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveConfigData(cfg) {
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+function applyConfig() {
+  const cfg = loadConfig();
+  const stand = cfg.stand || 'Jan 2026';
+  const bereich = cfg.bereich || 'Brannenburg RO-L';
+  const subtitle = document.getElementById('header-subtitle');
+  const bereichEl = document.getElementById('header-bereich');
+  if (subtitle) subtitle.textContent = `Alarmierungsfolgen für den Dispositionsbereich · Stand: ${stand}`;
+  if (bereichEl) bereichEl.textContent = bereich;
+  // Update page title too
+  document.title = `Bereichsfolge ${bereich} RO-L`;
+}
+function openConfig() {
+  const cfg = loadConfig();
+  document.getElementById('cfg-stand').value = cfg.stand || 'Jan 2026';
+  document.getElementById('cfg-bereich').value = cfg.bereich || 'Brannenburg RO-L';
+  document.getElementById('config-modal').classList.add('visible');
+  setTimeout(() => document.getElementById('cfg-stand').focus(), 50);
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('visible');
+}
+function saveConfig() {
+  const stand = document.getElementById('cfg-stand').value.trim() || 'Jan 2026';
+  const bereich = document.getElementById('cfg-bereich').value.trim() || 'Brannenburg RO-L';
+  saveConfigData({ stand, bereich });
+  applyConfig();
+  closeConfig();
+}
+window.openConfig = openConfig;
+window.closeConfig = closeConfig;
+window.saveConfig = saveConfig;
+document.getElementById('cfg-stand').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cfg-bereich').focus(); });
+document.getElementById('cfg-bereich').addEventListener('keydown', e => { if(e.key==='Enter') saveConfig(); });
+
+// Apply config on load
+applyConfig();
 
 function toggleChangelog() { document.getElementById('changelog-modal').classList.toggle('visible'); }
 function closeChangelog() { document.getElementById('changelog-modal').classList.remove('visible'); }
